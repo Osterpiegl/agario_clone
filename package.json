@@ -16,7 +16,5 @@
     "url": "https://github.com/Osterpiegl/agario_clone/issues"
   },
   "homepage": "https://github.com/Osterpiegl/agario_clone#readme",
-  "dependencies": {
-    "p5": "^0.9.0"
-  }
+  "dependencies": {}
 }
