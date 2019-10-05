@@ -80,9 +80,8 @@ class Player extends Dot {
       this.size = this.size + 1;
       dot.size = DOT_BASE_SIZE;
     }
-    dot.x = random(w);
-    dot.y = random(h);
-    dot.color = random(255);
+    dot.pos = createVector(random(255), random(255));
+    dot.color = color(random(255), random(255), random(255));
   }
 }
 
