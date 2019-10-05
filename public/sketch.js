@@ -99,7 +99,6 @@ function setup() {
 
 function draw() {
   background(100);
-
   for (let i = 0; i < players.length; i += 1) {
     players[i].draw();
     for (let j = 0; j < players.length; j += 1) {
@@ -109,8 +108,7 @@ function draw() {
       }
     }
   }
-  players[0].updatePos(m, players[0].y);
-  m = m + 1;
+  players[0].updatePos(players[0].y);
   dots.forEach(dot => dot.draw());
 }
 
