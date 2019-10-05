@@ -2,13 +2,15 @@ let w = window.innerWidth;
 let h = window.innerHeight;
 function preload() {}
 let m = 0;
-const vel = 0.1; 
+const vel = 0.1;
+let mouseVector = createVector(mouseX, mouseY) 
 
 class Player {
   constructor(x = 1, y = 1, size = 10) {
     this.x = x;
     this.y = y;
     this.size = size;
+    this.pos = createVector(0, 0)
     this.xVel = 0;
     this.yVel = 0;
   }
