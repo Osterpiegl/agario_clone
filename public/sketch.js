@@ -1,30 +1,64 @@
-let w = window.innerWidth;
-let h = window.innerHeight;
+// let w = window.innerWidth;
+// let h = window.innerHeight;
+let w = 600;
+let h = 400;
+
 function preload() {}
 let m = 0;
 
-class Player {
-  constructor(x = 1, y = 1, size = 10, name = "", color = "#123") {
+class Dot {
+  constructor(x, y, size, color = "#bbb") {
     this.x = x;
     this.y = y;
     this.size = size;
-    this.name = name;
     this.color = color;
   }
 
-  updatePos(x, y) {
-    this.x = x;
-    this.y = y;
-  }
-
   draw() {
-    let c = color(this.color);
+    const c = color(this.color);
     fill(c);
     ellipse(this.x, this.y, this.size, this.size);
   }
 }
 
-const p1 = new Player(50, 50, 30);
+class Player extends Dot {
+  constructor(x = 1, y = 1, size = 10, name = "", color = "#123") {
+    super(x, y, size, color);
+    this.name = name;
+  }
+
+  updatePos(x, y) {
+    super.x = x;
+    super.y = y;
+  }
+
+  // draw() {
+  //   let c = color(this.color);
+  //   fill(c);
+  //   ellipse(this.x, this.y, this.size, this.size);
+  // }
+}
+
+function randomIntFromInterval(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function generateRandomDot() {
+  const randX = randomIntFromInterval(0, w);
+  const randY = randomIntFromInterval(0, h);
+  const randColor = "#" + ((Math.random() * 0xffffff) << 0).toString(16);
+  const size = 10;
+  return new Dot(randX, randY, size, randColor);
+}
+
+const dots = Array(15)
+  .fill(undefined)
+  .map(item => {
+    return generateRandomDot();
+  });
+
+const p1 = new Player(50, 50, 30, "p1", "#bbb");
+const p2 = new Player(100, 50, 30, "p2", "#fff");
 
 function setup() {
   createCanvas(600, 400);
@@ -33,9 +67,11 @@ function setup() {
 
 function draw() {
   background(100);
-  p1.updatePos(1, m);
+  p1.updatePos(m, p1.y);
   m = m + 1;
   p1.draw();
+  p2.draw();
+  dots.forEach(dot => dot.draw());
 }
 
 function keyPressed() {
