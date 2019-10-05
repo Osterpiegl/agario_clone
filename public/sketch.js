@@ -7,17 +7,29 @@ function preload() {}
 let m = 0;
 
 class Dot {
-  constructor(x, y, size, color = "#bbb") {
+  constructor(x, y, size, c = "123") {
     this.x = x;
     this.y = y;
     this.size = size;
-    this.color = color;
+    this.color = c;
   }
 
   draw() {
-    const c = color(this.color);
-    fill(c);
+    fill(color(this.color));
     ellipse(this.x, this.y, this.size, this.size);
+  }
+
+  changeColor() {
+    this.color = color(random(255), random(255), random(255));
+  }
+
+  intersects(other) {
+    var d = dist(this.x, this.y, other.x, other.y);
+    if (d < this.size / 2 + other.r / 2) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
@@ -57,8 +69,10 @@ const dots = Array(15)
     return generateRandomDot();
   });
 
-const p1 = new Player(50, 50, 30, "p1", "#bbb");
-const p2 = new Player(100, 50, 30, "p2", "#fff");
+const players = [
+  new Player(50, 50, 30, "p1", 255),
+  new Player(100, 50, 30, "p2", 123)
+];
 
 function setup() {
   createCanvas(600, 400);
@@ -67,10 +81,18 @@ function setup() {
 
 function draw() {
   background(100);
-  p1.updatePos(m, p1.y);
+
+  for (let i = 0; i < players.length; i += 1) {
+    players[i].draw();
+    for (let j = 0; j < players.length; j += 1) {
+      if (i != j && players[i].intersects(players[j])) {
+        players[i].changeColor();
+        players[j].changeColor();
+      }
+    }
+  }
+  players[0].updatePos(m, players[0].y);
   m = m + 1;
-  p1.draw();
-  p2.draw();
   dots.forEach(dot => dot.draw());
 }
 
