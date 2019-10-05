@@ -25,7 +25,8 @@ class Dot {
 
   intersects(other) {
     var d = dist(this.x, this.y, other.x, other.y);
-    if (d < this.size / 2 + other.r / 2) {
+    if (d < this.size / 2 + other.size / 2) {
+      console.log("INTER");
       return true;
     } else {
       return false;
@@ -40,14 +41,14 @@ class Player extends Dot {
     this.yVel = 0;
     this.name = name;
   }
-  
+
   updatePos() {
     if (mouseIsOutsidePlayer(this.x, this.y, this.size)) {
-      this.xVel = (mouseX-this.x)*vel
-      this.yVel = (mouseY-this.y)*vel
-      const mag = Math.sqrt(this.xVel*this.xVel+this.yVel*this.yVel)
-      this.xVel = this.xVel / mag * vel
-      this.yVel = this.yVel / mag * vel
+      this.xVel = (mouseX - this.x) * vel;
+      this.yVel = (mouseY - this.y) * vel;
+      const mag = Math.sqrt(this.xVel * this.xVel + this.yVel * this.yVel);
+      this.xVel = (this.xVel / mag) * vel;
+      this.yVel = (this.yVel / mag) * vel;
       this.x += this.xVel;
       this.y += this.yVel;
     }
@@ -73,12 +74,12 @@ function generateRandomDot() {
 }
 
 function mouseIsOutsidePlayer(x, y, size) {
-  const distance = dist(mouseX, mouseY, x, y)
-  const radius = size/2
+  const distance = dist(mouseX, mouseY, x, y);
+  const radius = size / 2;
   if (distance > radius) {
-    return true
+    return true;
   }
-  return false
+  return false;
 }
 
 const dots = Array(15)
@@ -111,4 +112,3 @@ function draw() {
   players[0].updatePos(players[0].y);
   dots.forEach(dot => dot.draw());
 }
-
