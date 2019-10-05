@@ -5,13 +5,21 @@ let h = 400;
 
 function preload() {}
 const vel = 3;
+const EATING_THRESH_HOLD = 5;
+const DOT_BASE_SIZE = 10;
+const PLAYER_BASE_SIZE = 30;
 
 class Dot {
-  constructor(x, y, size, c = "123") {
+  constructor(
+    x,
+    y,
+    size = DOT_BASE_SIZE,
+    color = color(random(255), random(255), random(255))
+  ) {
     this.x = x;
     this.y = y;
     this.size = size;
-    this.color = c;
+    this.color = color;
   }
 
   draw() {
@@ -26,7 +34,6 @@ class Dot {
   intersects(other) {
     var d = dist(this.x, this.y, other.x, other.y);
     if (d < this.size / 2 + other.size / 2) {
-      console.log("INTER");
       return true;
     } else {
       return false;
@@ -35,7 +42,13 @@ class Dot {
 }
 
 class Player extends Dot {
-  constructor(x = 1, y = 1, size = 10, name = "", color = "#123") {
+  constructor(
+    x = 1,
+    y = 1,
+    size = PLAYER_BASE_SIZE,
+    name,
+    color = color(random(255), random(255), random(255))
+  ) {
     super(x, y, size, color);
     this.xVel = 0;
     this.yVel = 0;
@@ -54,11 +67,26 @@ class Player extends Dot {
     }
   }
 
-  // draw() {
-  //   let c = color(this.color);
-  //   fill(c);
-  //   ellipse(this.x, this.y, this.size, this.size);
-  // }
+  canEat(dot) {
+    if (this.size - EATING_THRESH_HOLD > dot.size) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  eat(dot) {
+    if (dot.constructor.name === "Player") {
+      this.size = this.size + dot.size;
+      dot.size = PLAYER_BASE_SIZE;
+    } else {
+      this.size = this.size + 1;
+      dot.size = DOT_BASE_SIZE;
+    }
+    dot.x = random(w);
+    dot.y = random(h);
+    dot.color = random(255);
+  }
 }
 
 function randomIntFromInterval(min, max) {
@@ -82,15 +110,33 @@ function mouseIsOutsidePlayer(x, y, size) {
   return false;
 }
 
-const dots = Array(15)
+function playerCanEat(p1, p2) {
+  if (p1.size - EATING_THRESH_HOLD > p2.size) {
+    return true;
+  } else if (p2.size - EATING_THRESH_HOLD > p1.size) {
+    return false;
+  } else {
+    return false;
+  }
+}
+
+function resetPlayer(player) {
+  let p = player;
+  p.size = 10;
+  p.x = random(w);
+  p.y = random(h);
+  return p;
+}
+
+const dots = Array(5)
   .fill(undefined)
   .map(item => {
     return generateRandomDot();
   });
 
 const players = [
-  new Player(50, 50, 30, "p1", 255),
-  new Player(100, 50, 30, "p2", 123)
+  new Player(50, 50, 50, "p1", 255),
+  new Player(100, 50, 30, "p2", 255)
 ];
 
 function setup() {
@@ -98,17 +144,20 @@ function setup() {
   background(155);
 }
 
+const player = new Player(100, 50, 30, "fufu", 255);
+
+const items = [...players, ...dots];
+
 function draw() {
   background(100);
-  for (let i = 0; i < players.length; i += 1) {
-    players[i].draw();
-    for (let j = 0; j < players.length; j += 1) {
-      if (i != j && players[i].intersects(players[j])) {
-        players[i].changeColor();
-        players[j].changeColor();
-      }
+  for (let i = 0; i < items.length; i += 1) {
+    items[i].draw();
+    player.draw();
+    if (player.intersects(items[i])) {
+      let canEat = player.canEat(items[i]);
+      if (canEat) player.eat(items[i]);
     }
   }
-  players[0].updatePos(players[0].y);
-  dots.forEach(dot => dot.draw());
+
+  player.updatePos(player.y);
 }
