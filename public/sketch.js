@@ -8,25 +8,24 @@ const vel = 3;
 
 class Dot {
   constructor(x, y, size, c = "123") {
-    this.x = x;
-    this.y = y;
-    this.size = size;
+    this.pos = createVector(x, y);
+    this.r = size/2;
     this.color = c;
-  }
-
-  draw() {
-    fill(color(this.color));
-    ellipse(this.x, this.y, this.size, this.size);
   }
 
   changeColor() {
     this.color = color(random(255), random(255), random(255));
   }
 
+  show = function() {
+    fill(this.color);
+    ellipse(this.pos.x, this.pos.y, this.r * 2, this.r * 2);
+  }
+
   intersects(other) {
-    var d = dist(this.x, this.y, other.x, other.y);
+    var d = dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
     if (d < this.size / 2 + other.size / 2) {
-      console.log("INTER");
+      // console.log("INTER");
       return true;
     } else {
       return false;
@@ -37,29 +36,18 @@ class Dot {
 class Player extends Dot {
   constructor(x = 1, y = 1, size = 10, name = "", color = "#123") {
     super(x, y, size, color);
-    this.xVel = 0;
-    this.yVel = 0;
+    this.vel = createVector(0, 0);
     this.name = name;
   }
 
-  updatePos() {
-    // if (mouseIsOutsidePlayer(this.x, this.y, this.size)) {
-      console.log(mouseX, mouseY)
-      const xDiff = mouseX-this.x
-      const yDiff = mouseY-this.y
-      const mag = Math.sqrt(xDiff*xDiff+yDiff*yDiff)
-      this.xVel = xDiff / mag * vel
-      this.yVel = yDiff / mag * vel
-      this.x += this.xVel;
-      this.y += this.yVel;
-    // }
+  update() {
+    const newvel = createVector(mouseX - width / 2, mouseY - height / 2);
+    newvel.div(50);
+    newvel.setMag(3);
+    newvel.limit(3);
+    this.vel.lerp(newvel, 0.2);
+    this.pos.add(this.vel);
   }
-
-  // draw() {
-  //   let c = color(this.color);
-  //   fill(c);
-  //   ellipse(this.x, this.y, this.size, this.size);
-  // }
 }
 
 function randomIntFromInterval(min, max) {
@@ -74,28 +62,18 @@ function generateRandomDot() {
   return new Dot(randX, randY, size, randColor);
 }
 
-function mouseIsOutsidePlayer(x, y, size) {
-  const distance = dist(mouseX, mouseY, x, y)
-  console.log(distance)
-  const radius = size/2
-  if (distance > radius) {
-    return true;
-  }
-  return false;
-}
+let dots, players;
 
-const dots = Array(15)
+function setup() {
+  dots = Array(15)
   .fill(undefined)
   .map(item => {
     return generateRandomDot();
   });
-
-const players = [
-  new Player(50, 50, 30, "p1", 255),
-  new Player(100, 50, 30, "p2", 123)
-];
-
-function setup() {
+  players = [
+    new Player(50, 50, 30, "p1", 255),
+    new Player(100, 50, 30, "p2", 123)
+  ];  
   createCanvas(600, 400);
   background(155);
 }
@@ -103,10 +81,10 @@ function setup() {
 function draw() {
   background(100);
   translate(width / 2, height / 2);
-  translate(-players[0].x, -players[0].y);
-  players[0].updatePos(mouseX, mouseY);
+  translate(-players[0].pos.x, -players[0].pos.y);
+  players[0].update();
   for (let i = 0; i < players.length; i += 1) {
-    players[i].draw();
+    players[i].show();
     for (let j = 0; j < players.length; j += 1) {
       if (i != j && players[i].intersects(players[j])) {
         players[i].changeColor();
@@ -115,5 +93,5 @@ function draw() {
     }
   }
   
-  dots.forEach(dot => dot.draw());
+  dots.forEach(dot => dot.show());
 }
