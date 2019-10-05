@@ -25,7 +25,8 @@ class Dot {
 
   intersects(other) {
     var d = dist(this.x, this.y, other.x, other.y);
-    if (d < this.size / 2 + other.r / 2) {
+    if (d < this.size / 2 + other.size / 2) {
+      console.log("INTER");
       return true;
     } else {
       return false;
@@ -40,7 +41,7 @@ class Player extends Dot {
     this.yVel = 0;
     this.name = name;
   }
-  
+
   updatePos() {
     // if (mouseIsOutsidePlayer(this.x, this.y, this.size)) {
       console.log(mouseX, mouseY)
@@ -78,9 +79,9 @@ function mouseIsOutsidePlayer(x, y, size) {
   console.log(distance)
   const radius = size/2
   if (distance > radius) {
-    return true
+    return true;
   }
-  return false
+  return false;
 }
 
 const dots = Array(15)
@@ -116,4 +117,3 @@ function draw() {
   
   dots.forEach(dot => dot.draw());
 }
-
