@@ -5,27 +5,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/p5.js"></script>
   </head>
   <body>
+    <script src="/socket.io/socket.io.js"></script>
     <script
       language="javascript"
       type="text/javascript"
       src="sketch.js"
     ></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-      let socket = io();
-      let player = {
-        x: 50,
-        y: 100,
-        size: 200
-      }
-      
-      socket.emit('setPlayerName', 'Marvin');
-
-      socket.emit('updateState', player);
-
-      socket.on('updateState', (state) => {
-        console.table(state.players);
-      });
-    </script>
   </body>
 </html>

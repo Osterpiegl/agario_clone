@@ -3,6 +3,8 @@
 let w = 600;
 let h = 400;
 
+let socket;
+
 function preload() {}
 const vel = 3;
 const EATING_THRESH_HOLD = 5;
@@ -16,23 +18,22 @@ class Dot {
     size = DOT_BASE_SIZE,
     color = color(random(255), random(255), random(255))
   ) {
-    this.x = x;
-    this.y = y;
-    this.size = size;
+    this.pos = createVector(x, y);
+    this.size = size / 2;
     this.color = color;
-  }
-
-  draw() {
-    fill(color(this.color));
-    ellipse(this.x, this.y, this.size, this.size);
   }
 
   changeColor() {
     this.color = color(random(255), random(255), random(255));
   }
 
+  show = function() {
+    fill(this.color);
+    ellipse(this.pos.x, this.pos.y, this.size * 2, this.size * 2);
+  };
+
   intersects(other) {
-    var d = dist(this.x, this.y, other.x, other.y);
+    var d = dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
     if (d < this.size / 2 + other.size / 2) {
       return true;
     } else {
@@ -50,21 +51,17 @@ class Player extends Dot {
     color = color(random(255), random(255), random(255))
   ) {
     super(x, y, size, color);
-    this.xVel = 0;
-    this.yVel = 0;
+    this.vel = createVector(0, 0);
     this.name = name;
   }
 
-  updatePos() {
-    if (mouseIsOutsidePlayer(this.x, this.y, this.size)) {
-      this.xVel = (mouseX - this.x) * vel;
-      this.yVel = (mouseY - this.y) * vel;
-      const mag = Math.sqrt(this.xVel * this.xVel + this.yVel * this.yVel);
-      this.xVel = (this.xVel / mag) * vel;
-      this.yVel = (this.yVel / mag) * vel;
-      this.x += this.xVel;
-      this.y += this.yVel;
-    }
+  update() {
+    const newvel = createVector(mouseX - width / 2, mouseY - height / 2);
+    newvel.div(50);
+    newvel.setMag(3);
+    newvel.limit(3);
+    this.vel.lerp(newvel, 0.2);
+    this.pos.add(this.vel);
   }
 
   canEat(dot) {
@@ -101,14 +98,7 @@ function generateRandomDot() {
   return new Dot(randX, randY, size, randColor);
 }
 
-function mouseIsOutsidePlayer(x, y, size) {
-  const distance = dist(mouseX, mouseY, x, y);
-  const radius = size / 2;
-  if (distance > radius) {
-    return true;
-  }
-  return false;
-}
+let dots, players, player, items;
 
 function playerCanEat(p1, p2) {
   if (p1.size - EATING_THRESH_HOLD > p2.size) {
@@ -128,36 +118,41 @@ function resetPlayer(player) {
   return p;
 }
 
-const dots = Array(5)
-  .fill(undefined)
-  .map(item => {
-    return generateRandomDot();
-  });
-
-const players = [
-  new Player(50, 50, 50, "p1", 255),
-  new Player(100, 50, 30, "p2", 255)
-];
-
 function setup() {
+  socket = io.connect("http://localhost:3000");
+  dots = Array(15)
+    .fill(undefined)
+    .map(item => {
+      return generateRandomDot();
+    });
+  players = [
+    new Player(50, 50, 30, "p1", 255),
+    new Player(100, 50, 30, "p2", 123)
+  ];
+  player = new Player(100, 50, 30, "fufu", 255);
+  items = [...players, ...dots];
+
   createCanvas(600, 400);
   background(155);
 }
 
-const player = new Player(100, 50, 30, "fufu", 255);
-
-const items = [...players, ...dots];
-
 function draw() {
   background(100);
+  translate(width / 2, height / 2);
+  translate(-player.pos.x, -player.pos.y);
+  player.update();
   for (let i = 0; i < items.length; i += 1) {
-    items[i].draw();
-    player.draw();
+    items[i].show();
+    player.show();
     if (player.intersects(items[i])) {
       let canEat = player.canEat(items[i]);
       if (canEat) player.eat(items[i]);
     }
   }
 
-  player.updatePos(player.y);
+  if (frameCount % 60 === 0) {
+    console.log(player.pos.x);
+    const data = { x: player.pos.x, y: player.pos.y, size: player.size };
+    socket.emit("updateState", data);
+  }
 }
