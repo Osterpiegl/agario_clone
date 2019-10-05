@@ -1,3 +1,4 @@
+let express = require('express');
 let app = require('express')();
 let http = require('http').createServer(app);
 let io = require('socket.io')(http);
@@ -9,9 +10,7 @@ let field = {
   width: 300
 };
 
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
-});
+app.use(express.static('public'));
 
 io.on('connection', function(socket){
   console.log('a new user connected');
@@ -19,6 +18,14 @@ io.on('connection', function(socket){
   
   socket.on("setUsername", username => {
     players[players.findIndex(player => player.socketId === socket.id)].username = username;
+  });
+
+  socket.on('disconnect', function(){
+    console.log('a user disconnected');
+  });
+
+  socket.on('chat message', function(msg){
+    console.log('message: ' + msg);
   });
 });
 
