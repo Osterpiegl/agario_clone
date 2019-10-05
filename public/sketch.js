@@ -1,7 +1,7 @@
 let w = window.innerWidth;
 let h = window.innerHeight;
 function preload() {}
-const vel = 0.1;
+const vel = 3;
 
 class Player {
   constructor(x = 1, y = 1, size = 10, name = "", color = "#123") {
@@ -13,12 +13,17 @@ class Player {
     this.name = name;
     this.color = color;
   }
-
+  
   updatePos() {
-    this.xVel = (mouseX-this.x)*vel
-    this.yVel = (mouseY-this.y)*vel
-    this.x += this.xVel;
-    this.y += this.yVel;
+    if (mouseIsOutsidePlayer(this.x, this.y, this.size)) {
+      this.xVel = (mouseX-this.x)*vel
+      this.yVel = (mouseY-this.y)*vel
+      const mag = Math.sqrt(this.xVel*this.xVel+this.yVel*this.yVel)
+      this.xVel = this.xVel / mag * vel
+      this.yVel = this.yVel / mag * vel
+      this.x += this.xVel;
+      this.y += this.yVel;
+    }
   }
 
   draw() {
@@ -26,6 +31,15 @@ class Player {
     fill(c);
     ellipse(this.x, this.y, this.size, this.size);
   }
+}
+
+function mouseIsOutsidePlayer(x, y, size) {
+  const distance = dist(mouseX, mouseY, x, y)
+  const radius = size/2
+  if (distance > radius) {
+    return true
+  }
+  return false
 }
 
 const p1 = new Player(50, 50, 30);
@@ -40,3 +54,4 @@ function draw() {
   p1.updatePos();
   p1.draw();
 }
+
