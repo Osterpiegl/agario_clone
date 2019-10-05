@@ -20,8 +20,8 @@ io.on('connection', function(socket){
     players[players.findIndex(player => player.socketId === socket.id)].playerName = playerName;
   });
 
-  socket.on('updateState', (player) => {
-    updatePlayer(player, socket.id);
+  socket.on('updateState', data => {
+    updatePlayer(data, socket.id);
     io.emit("updateState", {
       players: players,
       food: food
@@ -47,16 +47,15 @@ function addNewPlayer(socket){
     socketId: socket.id,
     playerName: '',
     color: '#' + Math.floor(Math.random() * 16777215).toString(16),
-    size: 10,
-    x: Math.floor(Math.random() * field.height),
-    y: Math.floor(Math.random() * field.width)
+    r: 10, 
+    size: 10
   };
   players.push(newPlayer);
 }
 
-function updatePlayer(player, socketId){
+function updatePlayer({x, y, r}, socketId){
   playerIndex = players.findIndex(player => player.socketId === socketId);
-  players[playerIndex].x = player.x;
-  players[playerIndex].y = player.y;
-  players[playerIndex].size = player.size;
+  players[playerIndex].x = x;
+  players[playerIndex].y = y;
+  players[playerIndex].r = r;
 }

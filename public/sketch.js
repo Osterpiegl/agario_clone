@@ -3,6 +3,8 @@
 let w = 600;
 let h = 400;
 
+let socket;
+
 function preload() {}
 const vel = 3;
 
@@ -65,6 +67,7 @@ function generateRandomDot() {
 let dots, players;
 
 function setup() {
+  socket = io.connect('http://localhost:3000');
   dots = Array(15)
   .fill(undefined)
   .map(item => {
@@ -94,4 +97,9 @@ function draw() {
   }
   
   dots.forEach(dot => dot.show());
+  if (frameCount % 60 === 0) {
+    console.log(players[0].pos.x)
+    const data = {x: players[0].pos.x, y: players[0].pos.y, r: players[0].r}
+    socket.emit('updateState', data);
+  }
 }
