@@ -42,15 +42,16 @@ class Player extends Dot {
   }
   
   updatePos() {
-    if (mouseIsOutsidePlayer(this.x, this.y, this.size)) {
-      this.xVel = (mouseX-this.x)*vel
-      this.yVel = (mouseY-this.y)*vel
-      const mag = Math.sqrt(this.xVel*this.xVel+this.yVel*this.yVel)
-      this.xVel = this.xVel / mag * vel
-      this.yVel = this.yVel / mag * vel
+    // if (mouseIsOutsidePlayer(this.x, this.y, this.size)) {
+      console.log(mouseX, mouseY)
+      const xDiff = mouseX-this.x
+      const yDiff = mouseY-this.y
+      const mag = Math.sqrt(xDiff*xDiff+yDiff*yDiff)
+      this.xVel = xDiff / mag * vel
+      this.yVel = yDiff / mag * vel
       this.x += this.xVel;
       this.y += this.yVel;
-    }
+    // }
   }
 
   // draw() {
@@ -74,6 +75,7 @@ function generateRandomDot() {
 
 function mouseIsOutsidePlayer(x, y, size) {
   const distance = dist(mouseX, mouseY, x, y)
+  console.log(distance)
   const radius = size/2
   if (distance > radius) {
     return true
@@ -99,6 +101,9 @@ function setup() {
 
 function draw() {
   background(100);
+  translate(width / 2, height / 2);
+  translate(-players[0].x, -players[0].y);
+  players[0].updatePos(mouseX, mouseY);
   for (let i = 0; i < players.length; i += 1) {
     players[i].draw();
     for (let j = 0; j < players.length; j += 1) {
@@ -108,7 +113,7 @@ function draw() {
       }
     }
   }
-  players[0].updatePos(players[0].y);
+  
   dots.forEach(dot => dot.draw());
 }
 
