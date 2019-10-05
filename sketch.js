@@ -5,10 +5,12 @@ function preload() {}
 let m = 0;
 
 class Player {
-  constructor(x = 1, y = 1, size = 10) {
+  constructor(x = 1, y = 1, size = 10, name = "", color = "#123") {
     this.x = x;
     this.y = y;
     this.size = size;
+    this.name = name;
+    this.color = color;
   }
 
   updatePos(x, y) {
@@ -17,6 +19,8 @@ class Player {
   }
 
   draw() {
+    let c = color(this.color);
+    fill(c);
     ellipse(this.x, this.y, this.size, this.size);
   }
 }
