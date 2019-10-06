@@ -4,6 +4,7 @@ let w = 600;
 let h = 400;
 
 let socket;
+let dots, players, player, items;
 
 function preload() {}
 const vel = 3;
@@ -56,33 +57,26 @@ class Player extends Dot {
   }
 
   update() {
-    const newvel = createVector(mouseX - width / 2, mouseY - height / 2);
-    newvel.div(50);
-    newvel.setMag(3);
-    newvel.limit(3);
-    this.vel.lerp(newvel, 0.2);
+    const newVelocity = createVector(mouseX - width / 2, mouseY - height / 2);
+    newVelocity.div(50);
+    newVelocity.setMag(3);
+    newVelocity.limit(3);
+    this.vel.lerp(newVelocity, 0.2);
     this.pos.add(this.vel);
   }
 
   canEat(dot) {
-    if (this.size - EATING_THRESH_HOLD > dot.size) {
+    if (this.size*this.size*PI > dot.size*dot.size*PI) {
       return true;
     } else {
       return false;
     }
   }
 
-  eat(dot) {
-    if (dot.constructor.name === "Player") {
-      this.size = this.size + dot.size;
-      dot.size = PLAYER_BASE_SIZE;
-    } else {
-      this.size = this.size + 1;
-      dot.size = DOT_BASE_SIZE;
-    }
-    dot.x = random(w);
-    dot.y = random(h);
-    dot.color = random(255);
+  eat(i) {
+      this.size = Math.sqrt(this.size*this.size+dots[i].size*dots[i].size);
+      dots = [...dots.slice(0, i), generateRandomDot(),...dots.slice(i+1)];
+      items = [...dots, ...players]
   }
 }
 
@@ -97,8 +91,6 @@ function generateRandomDot() {
   const size = 10;
   return new Dot(randX, randY, size, randColor);
 }
-
-let dots, players, player, items;
 
 function playerCanEat(p1, p2) {
   if (p1.size - EATING_THRESH_HOLD > p2.size) {
@@ -119,19 +111,44 @@ function resetPlayer(player) {
 }
 
 function setup() {
-  socket = io.connect("http://localhost:3000");
   dots = Array(15)
     .fill(undefined)
     .map(item => {
       return generateRandomDot();
     });
-  players = [
-    new Player(50, 50, 30, "p1", 255),
-    new Player(100, 50, 30, "p2", 123)
-  ];
+  players = []
   player = new Player(100, 50, 30, "fufu", 255);
   items = [...players, ...dots];
 
+  socket = io.connect("http://localhost:3000");
+  //const playerIds = players.map(singlePlayer => singlePlayer.id)
+  // socket.on("updateState", (data)=> {
+  //   let playerGG = []
+  //   data.players.forEach(player => {
+  //     playerGG.push(
+  //       new Player(player.x, player.y, player.size, player.playerName)
+  //     )
+  //   })
+
+  //   players = playerGG
+  //   items = [...players, ...dots];
+
+    
+
+    // const {players: serverPlayers} = data
+    // serverPlayers.forEach(player => {
+    //   if (playerIds.includes(player.id)) {
+    //     players[player.id].x = player.x;
+    //     players[player.id].y = player.y;
+    //     players[player.id].size = player.size;
+    //   } else {
+
+    //   }
+    // }
+    // serverPlayers.forEach(player => { if (players[id] === players.id){
+      
+    // }})
+    // console.log(serverPlayers); })
   createCanvas(600, 400);
   background(155);
 }
@@ -141,18 +158,16 @@ function draw() {
   translate(width / 2, height / 2);
   translate(-player.pos.x, -player.pos.y);
   player.update();
+  player.show();
   for (let i = 0; i < items.length; i += 1) {
-    items[i].show();
-    player.show();
-    if (player.intersects(items[i])) {
-      let canEat = player.canEat(items[i]);
-      if (canEat) player.eat(items[i]);
+    let item = items[i];
+    item.show();
+    if (player.intersects(item) && player.canEat(item)) {
+      player.eat(i);
     }
   }
 
-  if (frameCount % 60 === 0) {
-    console.log(player.pos.x);
     const data = { x: player.pos.x, y: player.pos.y, size: player.size };
     socket.emit("updateState", data);
-  }
+  
 }
