@@ -9,7 +9,7 @@ let dots, players, player, items;
 function preload() {}
 const vel = 3;
 const EATING_THRESHOLD = 5*5;
-const DOT_BASE_SIZE = 10;
+const DOT_BASE_SIZE = 24;
 const PLAYER_BASE_SIZE = 30;
 
 class Dot {
@@ -153,10 +153,15 @@ function setup() {
   background(155);
 }
 
+let zoomFactor = 1;
+
 function draw() {
   background(100);
   translate(width / 2, height / 2);
-  const zoomFactor = 30/player.size
+  const zoomOut = 30/player.size
+  if (zoomOut < zoomFactor) {
+    zoomFactor -= 0.001
+  }
   scale(zoomFactor)
   translate(-player.pos.x, -player.pos.y);
   player.update();
