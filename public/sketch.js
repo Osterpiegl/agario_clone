@@ -156,9 +156,13 @@ function setup() {
 function draw() {
   background(100);
   translate(width / 2, height / 2);
+  const zoomFactor = 30/player.size
+  scale(zoomFactor)
+  if (frameCount % 30 === 0){
+    console.log(zoomFactor)
+  }
   translate(-player.pos.x, -player.pos.y);
   player.update();
-  player.show();
   for (let i = 0; i < items.length; i += 1) {
     let item = items[i];
     item.show();
@@ -166,7 +170,7 @@ function draw() {
       player.eat(i);
     }
   }
-
+  player.show();
     const data = { x: player.pos.x, y: player.pos.y, size: player.size };
     socket.emit("updateState", data);
   
