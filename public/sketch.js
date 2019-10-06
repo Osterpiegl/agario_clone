@@ -8,7 +8,7 @@ let dots, players, player, items;
 
 function preload() {}
 const vel = 3;
-const EATING_THRESH_HOLD = 5;
+const EATING_THRESHOLD = 5*5;
 const DOT_BASE_SIZE = 10;
 const PLAYER_BASE_SIZE = 30;
 
@@ -35,7 +35,7 @@ class Dot {
 
   intersects(other) {
     var d = dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
-    if (d < this.size / 2 + other.size / 2) {
+    if (d < this.size + other.size) {
       return true;
     } else {
       return false;
@@ -66,7 +66,7 @@ class Player extends Dot {
   }
 
   canEat(dot) {
-    if (this.size*this.size*PI > dot.size*dot.size*PI) {
+    if (this.size*this.size*PI > dot.size*dot.size*PI + EATING_THRESHOLD) {
       return true;
     } else {
       return false;
@@ -158,9 +158,6 @@ function draw() {
   translate(width / 2, height / 2);
   const zoomFactor = 30/player.size
   scale(zoomFactor)
-  if (frameCount % 30 === 0){
-    console.log(zoomFactor)
-  }
   translate(-player.pos.x, -player.pos.y);
   player.update();
   for (let i = 0; i < items.length; i += 1) {
