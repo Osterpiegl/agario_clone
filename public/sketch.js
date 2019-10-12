@@ -8,12 +8,12 @@ let foodArray, players, player, items;
 
 function preload() {}
 const vel = 3;
-const EATING_THRESHOLD = 5*5;
+const EATING_THRESHOLD = 5 * 5;
 const DOT_BASE_SIZE = 20;
 const PLAYER_BASE_SIZE = 25;
 const SIZE = 2;
-const BOARD_SIZE_Y = SIZE*h;
-const BOARD_SIZE_X = SIZE*w;
+const BOARD_SIZE_Y = SIZE * h;
+const BOARD_SIZE_X = SIZE * w;
 
 class Dot {
   constructor(
@@ -29,16 +29,12 @@ class Dot {
   show() {
     fill(this.color);
     ellipse(this.pos.x, this.pos.y, this.size * 2, this.size * 2);
-  };
-
+  }
 }
 
 class Food extends Dot {
-  constructor (
-    x = randomXCoord(),
-    y = randomYCoord(),
-  ) {
-    super(x, y, randomFoodSize(), randomColor())
+  constructor(x = randomXCoord(), y = randomYCoord()) {
+    super(x, y, randomFoodSize(), randomColor());
   }
 }
 
@@ -48,7 +44,8 @@ class Player extends Dot {
     y = 1,
     size = PLAYER_BASE_SIZE,
     name,
-    color = color(random(255), random(255), random(255))
+    color = color(random(255), random(255), random(255)),
+    stop = false
   ) {
     super(x, y, size, color);
     this.vel = createVector(0, 0);
@@ -56,6 +53,8 @@ class Player extends Dot {
   }
 
   update() {
+    if (this.stop) return;
+
     const newVelocity = createVector(mouseX - width / 2, mouseY - height / 2);
     newVelocity.div(50);
     newVelocity.setMag(3);
@@ -81,7 +80,10 @@ class Player extends Dot {
   }
 
   canEat(food) {
-    if (this.intersects(food) && this.size*this.size*PI > food.size*food.size*PI + EATING_THRESHOLD) {
+    if (
+      this.intersects(food) &&
+      this.size * this.size * PI > food.size * food.size * PI + EATING_THRESHOLD
+    ) {
       return true;
     } else {
       return false;
@@ -89,12 +91,11 @@ class Player extends Dot {
   }
 
   eat(foods, i) {
-    const food = foods[i]
-    this.size = Math.sqrt(this.size*this.size+food.size*food.size);
-    foods = [...foods.slice(0, i), new Food(),...foods.slice(i+1)]
-    return foods
+    const food = foods[i];
+    this.size = Math.sqrt(this.size * this.size + food.size * food.size);
+    foods = [...foods.slice(0, i), new Food(), ...foods.slice(i + 1)];
+    return foods;
   }
-
 }
 
 function randomIntFromInterval(min, max) {
@@ -102,7 +103,7 @@ function randomIntFromInterval(min, max) {
 }
 
 function randomFoodSize() {
-  return Math.random()*20+10
+  return Math.random() * 20 + 10;
 }
 
 function randomColor() {
@@ -113,20 +114,26 @@ function randomXCoord() {
   return randomIntFromInterval(-BOARD_SIZE_X, BOARD_SIZE_X);
 }
 
-function randomYCoord(){
+function randomYCoord() {
   return randomIntFromInterval(-BOARD_SIZE_Y, BOARD_SIZE_Y);
 }
 
-function generateFoodNearPoint(point){
-  const offsetX = Math.random() >= 0.5 ? Math.random()*w : Math.random()*-w;
-  const offsetY =  Math.random() >= 0.5 ? Math.random()*h : Math.random()*-h;
+function generateFoodNearPoint(point) {
+  const offsetX = Math.random() >= 0.5 ? Math.random() * w : Math.random() * -w;
+  const offsetY = Math.random() >= 0.5 ? Math.random() * h : Math.random() * -h;
   const x = point.x + offsetX;
   const y = point.y + offsetY;
-  foodArray = [...foodArray, new Food(x, y)]
+  foodArray = [...foodArray, new Food(x, y)];
 }
 
 function generateFoodNearPlayer() {
-  generateFoodNearPoint(player.pos)
+  generateFoodNearPoint(player.pos);
+}
+
+function keyPressed(value) {
+  if (value.keyCode === 32) {
+    player.stop = !player.stop;
+  }
 }
 
 function setup() {
@@ -135,7 +142,7 @@ function setup() {
     .map(item => {
       return new Food();
     });
-  players = []
+  players = [];
   player = new Player(100, 50, 30, "fufu", 255);
   items = [...players, ...foodArray];
   socket = io.connect("http://localhost:3000");
@@ -149,11 +156,11 @@ let zoomFactor = 1;
 function draw() {
   background(100);
   translate(width / 2, height / 2);
-  const zoomOut = 70/player.size
+  const zoomOut = 70 / player.size;
   if (zoomOut < zoomFactor) {
-    zoomFactor -= 0.001
+    zoomFactor -= 0.001;
   }
-  scale(zoomFactor)
+  scale(zoomFactor);
   translate(-player.pos.x, -player.pos.y);
   player.update();
   for (let i = 0; i < foodArray.length; i += 1) {
@@ -168,32 +175,29 @@ function draw() {
   socket.emit("updateState", data);
 }
 
+//const playerIds = players.map(singlePlayer => singlePlayer.id)
+// socket.on("updateState", (data)=> {
+//   let playerGG = []
+//   data.players.forEach(player => {
+//     playerGG.push(
+//       new Player(player.x, player.y, player.size, player.playerName)
+//     )
+//   })
 
- //const playerIds = players.map(singlePlayer => singlePlayer.id)
-  // socket.on("updateState", (data)=> {
-  //   let playerGG = []
-  //   data.players.forEach(player => {
-  //     playerGG.push(
-  //       new Player(player.x, player.y, player.size, player.playerName)
-  //     )
-  //   })
+//   players = playerGG
+//   items = [...players, ...foodArray];
 
-  //   players = playerGG
-  //   items = [...players, ...foodArray];
+// const {players: serverPlayers} = data
+// serverPlayers.forEach(player => {
+//   if (playerIds.includes(player.id)) {
+//     players[player.id].x = player.x;
+//     players[player.id].y = player.y;
+//     players[player.id].size = player.size;
+//   } else {
 
-    
+//   }
+// }
+// serverPlayers.forEach(player => { if (players[id] === players.id){
 
-    // const {players: serverPlayers} = data
-    // serverPlayers.forEach(player => {
-    //   if (playerIds.includes(player.id)) {
-    //     players[player.id].x = player.x;
-    //     players[player.id].y = player.y;
-    //     players[player.id].size = player.size;
-    //   } else {
-
-    //   }
-    // }
-    // serverPlayers.forEach(player => { if (players[id] === players.id){
-      
-    // }})
-    // console.log(serverPlayers); })
+// }})
+// console.log(serverPlayers); })
