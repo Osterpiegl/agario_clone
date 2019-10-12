@@ -61,6 +61,15 @@ class Player extends Dot {
     newVelocity.setMag(3);
     newVelocity.limit(3);
     this.vel.lerp(newVelocity, 0.2);
+
+    const newX = this.pos.x + this.vel.x;
+    const newY = this.pos.y + this.vel.y;
+    if (newX >= BOARD_SIZE_X || newX <= -BOARD_SIZE_X ){
+      this.vel.x = 0;
+    }
+    if (newY >= BOARD_SIZE_Y || newY <= -BOARD_SIZE_Y){
+      this.vel.y = 0;
+    }
     this.pos.add(this.vel);
   }
 
@@ -75,8 +84,8 @@ class Player extends Dot {
 
   reset() {
     this.size = 10;
-    this.x = random(w);
-    this.y = random(h);
+    this.x = random(-BOARD_SIZE_X, BOARD_SIZE_X);
+    this.y = random(-BOARD_SIZE_X, BOARD_SIZE_Y);
     return p;
   }
 
@@ -129,6 +138,8 @@ function generateFoodNearPlayer() {
   generateFoodNearPoint(player.pos)
 }
 
+let board;
+
 function setup() {
   foodArray = Array(1000)
     .fill(undefined)
@@ -136,15 +147,29 @@ function setup() {
       return new Food();
     });
   players = []
-  player = new Player(100, 50, 30, "fufu", 255);
+  player = new Player(100, 50, 30, "fufu", 60);
   items = [...players, ...foodArray];
   socket = io.connect("http://localhost:3000");
-
-  createCanvas(600, 400);
-  background(155);
+  board = new Board()
+  createCanvas(w, h);
 }
 
 let zoomFactor = 1;
+
+class Board {
+  constructor() {
+    this.x = -BOARD_SIZE_X
+    this.y = -BOARD_SIZE_Y
+    this.sizeX = 2*BOARD_SIZE_X
+    this.sizeY = 2*BOARD_SIZE_Y
+  }
+ 
+  show() {
+    fill(255)
+    stroke(0);
+    rect(this.x, this.y, this.sizeX, this.sizeY);
+  };
+}
 
 function draw() {
   background(100);
@@ -153,8 +178,11 @@ function draw() {
   if (zoomOut < zoomFactor) {
     zoomFactor -= 0.001
   }
+
   scale(zoomFactor)
   translate(-player.pos.x, -player.pos.y);
+  board.show();
+
   player.update();
   for (let i = 0; i < foodArray.length; i += 1) {
     let food = foodArray[i];
@@ -167,6 +195,16 @@ function draw() {
   const data = { x: player.pos.x, y: player.pos.y, size: player.size };
   socket.emit("updateState", data);
 }
+
+// TODO: Multiplayer Integration
+// TODO: Borders and Field Size
+// TODO: Blobs spalten mechanics
+// TODO: fluid zoom out 
+// TODO: green spiky things 
+// TODO: decay rate - increases when getting bigger
+// TODO: eject out mass particles 
+// TODO: speed needs to be related to player size 
+
 
 
  //const playerIds = players.map(singlePlayer => singlePlayer.id)
