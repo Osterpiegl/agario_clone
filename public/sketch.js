@@ -20,21 +20,28 @@ class Dot {
     x = 0,
     y = 0,
     size = DOT_BASE_SIZE,
-    color = color(255, 255, 255)
+    color = color(255, 255, 255),
+    stroke = false
   ) {
     this.pos = createVector(x, y);
     this.size = size / 2;
     this.color = color;
+    this.stroke = stroke;
   }
   show() {
     fill(this.color);
+    strokeWeight(0);
+    if (this.stroke) {
+      strokeWeight(5);
+      stroke("#f542bc");
+    }
     ellipse(this.pos.x, this.pos.y, this.size * 2, this.size * 2);
   }
 }
 
 class Food extends Dot {
   constructor(x = randomXCoord(), y = randomYCoord()) {
-    super(x, y, randomFoodSize(), randomColor());
+    super(x, y, randomFoodSize(), randomColor(), false);
   }
 }
 
@@ -47,7 +54,8 @@ class Player extends Dot {
     color = color(random(255), random(255), random(255)),
     stop = false
   ) {
-    super(x, y, size, color);
+    super(x, y, size, color, true);
+    this.stop = stop;
     this.vel = createVector(0, 0);
     this.name = name;
   }
@@ -61,6 +69,13 @@ class Player extends Dot {
     newVelocity.limit(3);
     this.vel.lerp(newVelocity, 0.2);
     this.pos.add(this.vel);
+
+    const updateData = {
+      x: this.pos.x,
+      y: this.pos.y,
+      r: this.size
+    };
+    socket.emit("updateState", updateData);
   }
 
   intersects(other) {
@@ -147,6 +162,20 @@ function setup() {
   items = [...players, ...foodArray];
   socket = io.connect("http://localhost:3000");
 
+  socket.on("updateState", data => {
+    players = data.players.map(
+      player =>
+        new Player(
+          player.x,
+          player.y,
+          player.r,
+          player.playerName,
+          player.color,
+          false
+        )
+    );
+  });
+
   createCanvas(600, 400);
   background(155);
 }
@@ -170,9 +199,8 @@ function draw() {
       foodArray = player.eat(foodArray, i);
     }
   }
+  players.forEach(player => player.show());
   player.show();
-  const data = { x: player.pos.x, y: player.pos.y, size: player.size };
-  socket.emit("updateState", data);
 }
 
 //const playerIds = players.map(singlePlayer => singlePlayer.id)
