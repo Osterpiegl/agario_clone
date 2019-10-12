@@ -38,6 +38,22 @@ class Food extends Dot {
   }
 }
 
+class EjectedMatter extends Dot {
+  constructor(pos, vel) {
+    super(pos.x, pos.y, randomFoodSize(), randomColor(), color(0, 100, 50));
+    this.vel = vel;
+  }
+  speedDecay() {
+    if (this.velMag > 0){
+      this.velMag = this.velMag - 0.1;
+      this.vel.setMag(this.velMag)
+    }
+  }
+  update() {
+    this.pos.add(this.vel)
+  }
+}
+
 class Player extends Dot {
   constructor(
     x = 1,
@@ -88,6 +104,12 @@ class Player extends Dot {
     return p;
   }
 
+  eject() {
+    if (this.size > 10){
+      this.size = this.size - 5
+    }
+    ejectedMatterArray.push(new EjectedMatter(this.pos.add(this.r)))
+  }
   canEat(food) {
     if (
       this.intersects(food) &&
@@ -204,7 +226,6 @@ function draw() {
 }
 
 // TODO: Multiplayer Integration
-// TODO: Borders and Field Size
 // TODO: Blobs spalten mechanics
 // TODO: fluid zoom out 
 // TODO: green spiky things 
