@@ -20,21 +20,28 @@ class Dot {
     x = 0,
     y = 0,
     size = DOT_BASE_SIZE,
-    color = color(255, 255, 255)
+    color = color(255, 255, 255),
+    stroke = false
   ) {
     this.pos = createVector(x, y);
     this.size = size / 2;
     this.color = color;
+    this.stroke = stroke;
   }
   show() {
     fill(this.color);
+    strokeWeight(0);
+    if (this.stroke) {
+      strokeWeight(5);
+      stroke("#f542bc");
+    }
     ellipse(this.pos.x, this.pos.y, this.size * 2, this.size * 2);
   }
 }
 
 class Food extends Dot {
   constructor(x = randomXCoord(), y = randomYCoord()) {
-    super(x, y, randomFoodSize(), randomColor());
+    super(x, y, randomFoodSize(), randomColor(), false);
   }
 }
 
@@ -63,7 +70,8 @@ class Player extends Dot {
     color = color(random(255), random(255), random(255)),
     stop = false
   ) {
-    super(x, y, size, color);
+    super(x, y, size, color, true);
+    this.stop = stop;
     this.vel = createVector(0, 0);
     this.name = name;
   }
@@ -79,13 +87,20 @@ class Player extends Dot {
 
     const newX = this.pos.x + this.vel.x;
     const newY = this.pos.y + this.vel.y;
-    if (newX >= BOARD_SIZE_X || newX <= -BOARD_SIZE_X ){
+    if (newX >= BOARD_SIZE_X || newX <= -BOARD_SIZE_X) {
       this.vel.x = 0;
     }
-    if (newY >= BOARD_SIZE_Y || newY <= -BOARD_SIZE_Y){
+    if (newY >= BOARD_SIZE_Y || newY <= -BOARD_SIZE_Y) {
       this.vel.y = 0;
     }
     this.pos.add(this.vel);
+
+    const updateData = {
+      x: this.pos.x,
+      y: this.pos.y,
+      r: this.size
+    };
+    socket.emit("updateState", updateData);
   }
 
   intersects(other) {
@@ -175,11 +190,25 @@ function setup() {
     .map(item => {
       return new Food();
     });
-  players = []
+  players = [];
   player = new Player(100, 50, 30, "fufu", 60);
   items = [...players, ...foodArray];
   socket = io.connect("http://localhost:3000");
-  board = new Board()
+
+  socket.on("updateState", data => {
+    players = data.players.map(
+      player =>
+        new Player(
+          player.x,
+          player.y,
+          player.r,
+          player.playerName,
+          player.color,
+          false
+        )
+    );
+  });
+  board = new Board();
   createCanvas(w, h);
 }
 
@@ -187,17 +216,17 @@ let zoomFactor = 1;
 
 class Board {
   constructor() {
-    this.x = -BOARD_SIZE_X
-    this.y = -BOARD_SIZE_Y
-    this.sizeX = 2*BOARD_SIZE_X
-    this.sizeY = 2*BOARD_SIZE_Y
+    this.x = -BOARD_SIZE_X;
+    this.y = -BOARD_SIZE_Y;
+    this.sizeX = 2 * BOARD_SIZE_X;
+    this.sizeY = 2 * BOARD_SIZE_Y;
   }
- 
+
   show() {
-    fill(255)
+    fill(255);
     stroke(0);
     rect(this.x, this.y, this.sizeX, this.sizeY);
-  };
+  }
 }
 
 function draw() {
@@ -208,7 +237,7 @@ function draw() {
     zoomFactor -= 0.001;
   }
 
-  scale(zoomFactor)
+  scale(zoomFactor);
   translate(-player.pos.x, -player.pos.y);
   board.show();
 
@@ -220,46 +249,41 @@ function draw() {
       foodArray = player.eat(foodArray, i);
     }
   }
+  players.forEach(player => player.show());
   player.show();
-  const data = { x: player.pos.x, y: player.pos.y, size: player.size };
-  socket.emit("updateState", data);
 }
 
 // TODO: Multiplayer Integration
 // TODO: Blobs spalten mechanics
-// TODO: fluid zoom out 
-// TODO: green spiky things 
+// TODO: fluid zoom out
+// TODO: green spiky things
 // TODO: decay rate - increases when getting bigger
-// TODO: eject out mass particles 
-// TODO: speed needs to be related to player size 
+// TODO: eject out mass particles
+// TODO: speed needs to be related to player size
 
+//const playerIds = players.map(singlePlayer => singlePlayer.id)
+// socket.on("updateState", (data)=> {
+//   let playerGG = []
+//   data.players.forEach(player => {
+//     playerGG.push(
+//       new Player(player.x, player.y, player.size, player.playerName)
+//     )
+//   })
 
+//   players = playerGG
+//   items = [...players, ...foodArray];
 
- //const playerIds = players.map(singlePlayer => singlePlayer.id)
-  // socket.on("updateState", (data)=> {
-  //   let playerGG = []
-  //   data.players.forEach(player => {
-  //     playerGG.push(
-  //       new Player(player.x, player.y, player.size, player.playerName)
-  //     )
-  //   })
+// const {players: serverPlayers} = data
+// serverPlayers.forEach(player => {
+//   if (playerIds.includes(player.id)) {
+//     players[player.id].x = player.x;
+//     players[player.id].y = player.y;
+//     players[player.id].size = player.size;
+//   } else {
 
-  //   players = playerGG
-  //   items = [...players, ...foodArray];
+//   }
+// }
+// serverPlayers.forEach(player => { if (players[id] === players.id){
 
-    
-
-    // const {players: serverPlayers} = data
-    // serverPlayers.forEach(player => {
-    //   if (playerIds.includes(player.id)) {
-    //     players[player.id].x = player.x;
-    //     players[player.id].y = player.y;
-    //     players[player.id].size = player.size;
-    //   } else {
-
-    //   }
-    // }
-    // serverPlayers.forEach(player => { if (players[id] === players.id){
-      
-    // }})
-    // console.log(serverPlayers); })
+// }})
+// console.log(serverPlayers); })
