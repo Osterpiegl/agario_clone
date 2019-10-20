@@ -9,22 +9,23 @@ let foodArray, players, player, items;
 function preload() {}
 const vel = 3;
 const EATING_THRESHOLD = 5 * 5;
-const DOT_BASE_SIZE = 20;
-const PLAYER_BASE_SIZE = 25;
+const DOT_BASE_SIZE = 5;
+const PLAYER_BASE_SIZE = 12;
 const SIZE = 2;
 const BOARD_SIZE_Y = SIZE * h;
 const BOARD_SIZE_X = SIZE * w;
+const EJECTED_MATTER_SIZE = 5;
 
 class Dot {
   constructor(
     x = 0,
     y = 0,
-    size = DOT_BASE_SIZE,
+    r = DOT_BASE_SIZE,
     color = color(255, 255, 255),
     stroke = false
   ) {
     this.pos = createVector(x, y);
-    this.size = size / 2;
+    this.r = r;
     this.color = color;
     this.stroke = stroke;
   }
@@ -35,8 +36,9 @@ class Dot {
       strokeWeight(5);
       stroke("#f542bc");
     }
-    ellipse(this.pos.x, this.pos.y, this.size * 2, this.size * 2);
+    ellipse(this.pos.x, this.pos.y, this.r * 2, this.r * 2);
   }
+
 }
 
 class Food extends Dot {
@@ -46,16 +48,20 @@ class Food extends Dot {
 }
 
 class EjectedMatter extends Dot {
-  constructor(pos, vel) {
-    super(pos.x, pos.y, randomFoodSize(), randomColor(), color(0, 100, 50));
-    this.vel = vel;
+  constructor(x, y, vel) {
+    const r = EJECTED_MATTER_SIZE;
+    super(x, y, r, color(0, 100, 50), false);
+    this.velMag = 10;
+    this.vel = vel.setMag(this.velMag);
   }
+
   speedDecay() {
     if (this.velMag > 0){
-      this.velMag = this.velMag - 0.1;
+      this.velMag = this.velMag - 0.01;
       this.vel.setMag(this.velMag)
     }
   }
+
   update() {
     this.pos.add(this.vel)
   }
@@ -65,12 +71,12 @@ class Player extends Dot {
   constructor(
     x = 1,
     y = 1,
-    size = PLAYER_BASE_SIZE,
+    r = PLAYER_BASE_SIZE,
     name,
     color = color(random(255), random(255), random(255)),
     stop = false
   ) {
-    super(x, y, size, color, true);
+    super(x, y, r, color, true);
     this.stop = stop;
     this.vel = createVector(0, 0);
     this.name = name;
@@ -98,14 +104,14 @@ class Player extends Dot {
     const updateData = {
       x: this.pos.x,
       y: this.pos.y,
-      r: this.size
+      r: this.r
     };
     socket.emit("updateState", updateData);
   }
 
   intersects(other) {
     var d = dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
-    if (d < this.size + other.size) {
+    if (d < this.r + other.r) {
       return true;
     } else {
       return false;
@@ -113,22 +119,24 @@ class Player extends Dot {
   }
 
   reset() {
-    this.size = 10;
+    this.r = 10;
     this.x = random(-BOARD_SIZE_X, BOARD_SIZE_X);
     this.y = random(-BOARD_SIZE_X, BOARD_SIZE_Y);
     return p;
   }
 
-  eject() {
-    if (this.size > 10){
-      this.size = this.size - 5
+  ejectMatter() {
+    if (this.r > 10){
+      this.r = Math.sqrt(this.r*this.r - EJECTED_MATTER_SIZE*EJECTED_MATTER_SIZE);
+      ejectedMatterArray.push(new EjectedMatter(this.pos.x + this.r, this.pos.y + this.r, this.vel.mult(2)))
+      console.log(ejectedMatterArray)
     }
-    ejectedMatterArray.push(new EjectedMatter(this.pos.add(this.r)))
   }
+
   canEat(food) {
     if (
       this.intersects(food) &&
-      this.size * this.size * PI > food.size * food.size * PI + EATING_THRESHOLD
+      this.r * this.r * PI > food.r * food.r * PI + EATING_THRESHOLD
     ) {
       return true;
     } else {
@@ -136,9 +144,16 @@ class Player extends Dot {
     }
   }
 
-  eat(foods, i) {
+  eatEjectedMatter(ejectedMatterArray, i){
+    const ejectedMatter = ejectedMatterArray[i];
+    this.r = Math.sqrt(this.r * this.r + ejectedMatter.r * ejectedMatter.r);
+    ejectedMatterArray = [...ejectedMatterArray.slice(0, i), ...ejectedMatterArray.slice(i + 1)];
+    return ejectedMatterArray;
+  }
+
+  eatFood(foods, i) {
     const food = foods[i];
-    this.size = Math.sqrt(this.size * this.size + food.size * food.size);
+    this.r = Math.sqrt(this.r * this.r + food.r * food.r);
     foods = [...foods.slice(0, i), new Food(), ...foods.slice(i + 1)];
     return foods;
   }
@@ -149,7 +164,7 @@ function randomIntFromInterval(min, max) {
 }
 
 function randomFoodSize() {
-  return Math.random() * 20 + 10;
+  return Math.random() * DOT_BASE_SIZE;
 }
 
 function randomColor() {
@@ -178,11 +193,13 @@ function generateFoodNearPlayer() {
 
 function keyPressed(value) {
   if (value.keyCode === 32) {
-    player.stop = !player.stop;
+    player.ejectMatter();
+    // player.stop = !player.stop;
   }
 }
 
 let board;
+let ejectedMatterArray = []
 
 function setup() {
   foodArray = Array(1000)
@@ -232,7 +249,7 @@ class Board {
 function draw() {
   background(100);
   translate(width / 2, height / 2);
-  const zoomOut = 70 / player.size;
+  const zoomOut = 70 / player.r;
   if (zoomOut < zoomFactor) {
     zoomFactor -= 0.001;
   }
@@ -246,8 +263,17 @@ function draw() {
     let food = foodArray[i];
     food.show();
     if (player.canEat(food)) {
-      foodArray = player.eat(foodArray, i);
+      foodArray = player.eatFood(foodArray, i);
     }
+  }
+  for (let i = 0; i < ejectedMatterArray.length; i += 1) {
+    let ejectedMatter = ejectedMatterArray[i];
+    ejectedMatter.update();
+    ejectedMatter.speedDecay();
+    ejectedMatter.show();
+    // if (player.canEat(ejectedMatter)) {
+    //   ejectedMatterArray = player.eatEjectedMatter(ejectedMatterArray, i);
+    // }
   }
   players.forEach(player => player.show());
   player.show();
@@ -259,14 +285,14 @@ function draw() {
 // TODO: green spiky things
 // TODO: decay rate - increases when getting bigger
 // TODO: eject out mass particles
-// TODO: speed needs to be related to player size
+// TODO: speed needs to be related to player r
 
 //const playerIds = players.map(singlePlayer => singlePlayer.id)
 // socket.on("updateState", (data)=> {
 //   let playerGG = []
 //   data.players.forEach(player => {
 //     playerGG.push(
-//       new Player(player.x, player.y, player.size, player.playerName)
+//       new Player(player.x, player.y, player.r, player.playerName)
 //     )
 //   })
 
@@ -278,7 +304,7 @@ function draw() {
 //   if (playerIds.includes(player.id)) {
 //     players[player.id].x = player.x;
 //     players[player.id].y = player.y;
-//     players[player.id].size = player.size;
+//     players[player.id].r = player.r;
 //   } else {
 
 //   }
