@@ -47,24 +47,50 @@ class Food extends Dot {
   }
 }
 
+
 class EjectedMatter extends Dot {
-  constructor(x, y, vel) {
-    const r = EJECTED_MATTER_SIZE;
-    super(x, y, r, color(0, 100, 50), false);
+  constructor(x, y, vel, pos, direction) {
+    super(x, y, EJECTED_MATTER_SIZE, color(0, 100, 50), false);
     this.velMag = 10;
-    this.vel = vel.setMag(this.velMag);
+    this.vel = vel//vel.copy();
+    // this.vel.setMag(this.velMag)
+    this.pos = pos;
+    this.direction = direction;
+    this.stop = false
   }
 
-  speedDecay() {
-    if (this.velMag > 0){
-      this.velMag = this.velMag - 0.01;
-      this.vel.setMag(this.velMag)
-    }
+  draw() {
+    drawArrow(this.pos, this.direction, 'red');
   }
+  // speedDecay() {
+  //   if (this.velMag > 0 && !this.stop){
+  //     this.velMag = this.velMag - 0.2;
+  //     this.vel.setMag(this.velMag)
+  //   }
+  //   else {
+  //     this.stop = true
+  //   }
+  // }
 
   update() {
+    if (!this.stop) {
     this.pos.add(this.vel)
+    }
   }
+}
+
+function drawArrow(base, vec, myColor) {
+  push();
+  stroke(myColor);
+  strokeWeight(3);
+  fill(myColor);
+  translate(base.x, base.y);
+  line(0, 0, vec.x, vec.y);
+  rotate(vec.heading());
+  let arrowSize = 7;
+  translate(vec.mag() - arrowSize, 0);
+  triangle(0, arrowSize / 2, 0, -arrowSize / 2, arrowSize, 0);
+  pop();
 }
 
 class Player extends Dot {
@@ -126,10 +152,14 @@ class Player extends Dot {
   }
 
   ejectMatter() {
-    if (this.r > 10){
-      this.r = Math.sqrt(this.r*this.r - EJECTED_MATTER_SIZE*EJECTED_MATTER_SIZE);
-      ejectedMatterArray.push(new EjectedMatter(this.pos.x + this.r, this.pos.y + this.r, this.vel.mult(2)))
-      console.log(ejectedMatterArray)
+      if (this.r > 10){
+      // this.r = Math.sqrt(this.r*this.r - EJECTED_MATTER_SIZE*EJECTED_MATTER_SIZE);
+      const direction = createVector(mouseX, mouseY)
+
+      // direction.normalize()
+      // direction.mult(this.r)
+      // direction.add(this.pos)
+      ejectedMatterArray.push(new EjectedMatter(direction.x, direction.y, this.vel, this.pos, direction))
     }
   }
 
@@ -193,9 +223,9 @@ function generateFoodNearPlayer() {
 
 function keyPressed(value) {
   if (value.keyCode === 32) {
-    player.ejectMatter();
-    // player.stop = !player.stop;
-  }
+      player.ejectMatter();
+      // player.stop = !player.stop;
+    }
 }
 
 let board;
@@ -253,12 +283,11 @@ function draw() {
   if (zoomOut < zoomFactor) {
     zoomFactor -= 0.001;
   }
-
   scale(zoomFactor);
   translate(-player.pos.x, -player.pos.y);
   board.show();
 
-  player.update();
+  // player.update();
   for (let i = 0; i < foodArray.length; i += 1) {
     let food = foodArray[i];
     food.show();
@@ -266,17 +295,20 @@ function draw() {
       foodArray = player.eatFood(foodArray, i);
     }
   }
+
+  
+  players.forEach(player => player.show());
+  player.show();
   for (let i = 0; i < ejectedMatterArray.length; i += 1) {
     let ejectedMatter = ejectedMatterArray[i];
     ejectedMatter.update();
-    ejectedMatter.speedDecay();
-    ejectedMatter.show();
+    // ejectedMatter.speedDecay();
+    
+    ejectedMatter.draw();
     // if (player.canEat(ejectedMatter)) {
     //   ejectedMatterArray = player.eatEjectedMatter(ejectedMatterArray, i);
     // }
   }
-  players.forEach(player => player.show());
-  player.show();
 }
 
 // TODO: Multiplayer Integration
